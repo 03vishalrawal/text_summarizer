@@ -1,36 +1,35 @@
-import streamlit as st
-from langchain import OpenAI
-from langchain.docstore.document import Document
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.chains.summarize import load_summarize_chain
+from langchain_openai import OpenAI
+from langchain_openai import ChatOpenAI
+from langchain.schema import(
+    AIMessage,
+    HumanMessage,
+    SystemMessage
+)
+from dotenv import load_dotenv
 
-def generate_response(txt):
-    # Instantiate the LLM model
-    llm = OpenAI(temperature=0, openai_api_key='OpenAI API Key')
-    # Split text
-    text_splitter = CharacterTextSplitter()
-    texts = text_splitter.split_text(txt)
-    # Create multiple documents
-    docs = [Document(page_content=t) for t in texts]
-    # Text summarization
-    chain = load_summarize_chain(llm, chain_type='map_reduce')
-    return chain.run(docs)
 
-# Page title
-st.set_page_config(page_title='🦜🔗 Text Summarization App')
-st.title('🦜🔗 Text Summarization App')
+import os
 
-# Text input
-txt_input = st.text_area('Enter your text', '', height=200)
-# Form to accept user's text input for summarization
-result = []
-with st.form('summarize_form', clear_on_submit=True):
-    openai_api_key = st.text_input('OpenAI API Key', type='password', disabled=not txt_input)
-    submitted = st.form_submit_button('Submit')
-    if submitted and openai_api_key.startswith('sk-'):
-        with st.spinner('Calculating...'):
-            response = generate_response(txt_input)
-            result.append(response)
-            del openai_api_key
-if len(result):
-    st.info(response)
+load_dotenv()
+
+print("API Key loaded?", os.getenv("OPEN_API_KEY") is not None)
+
+
+text = """Text summarization is the process of distilling the most important information 
+from a text into a shorter version. In practical terms, this means creating a brief but 
+informative summary of long-form content like research papers, podcasts, news articles, 
+or even meeting notes."""
+
+chat_messages = [
+    SystemMessage(content="You are an expert assistant in technical understandings summarization."),
+    HumanMessage(content=f"Please provide me a summary of the document {text}")
+]
+
+llm = ChatOpenAI(api_key=os.getenv("OPEN_API_KEY"), model="gpt-4o-mini", temperature=0)
+
+print(llm.get_num_tokens)
+
+# Run the chat model
+response = llm.invoke(chat_messages)
+
+print(response.content)
